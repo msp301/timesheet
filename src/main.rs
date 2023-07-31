@@ -25,23 +25,16 @@ fn main() -> Result<(), Error> {
                 println!("Matched line: {}", current_line);
 
                 let captures = h2_regex.captures(&current_line).unwrap();
-                // let day = captures.get(0).unwrap().as_str().parse::<u32>().unwrap();
-                let day : u32 = captures.get(2).unwrap().as_str().parse::<u32>().unwrap().try_into().unwrap();
-                let month_str = captures.get(3).unwrap().as_str();//.parse::<u32>().unwrap().try_into().unwrap();
-                let year : u32 = captures.get(4).unwrap().as_str().parse::<u32>().unwrap().try_into().unwrap();
+                let day = captures.get(2).unwrap().as_str();
+                let month = captures.get(3).unwrap().as_str();
+                let year = captures.get(4).unwrap().as_str();
 
-                println!("day: '{}', month: '{}', year: '{}'", day, month_str, year);
+                let date_str = format!("{} {} {}", day, month, year);
+                let dt = NaiveDate::parse_from_str(&date_str, "%d %B %Y").unwrap();
 
-                //TODO: Parse 'month_str' into numeric month OR find a way to support parsing the
-                //complete line into a DateTime that can support abbreviated dates.
-                //Haven't been sure how to support parsing '1st' or '24th'.
-
-                // let date_utc = NaiveDate::from_ymd_opt(year, month, day).unwrap();
-                // println!("Got date: {}", date_utc);
-
+                println!("{}", dt);
             }
         }
-        // println!("{}", current_line);
     }
 
     Ok(())
