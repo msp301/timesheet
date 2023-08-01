@@ -29,19 +29,13 @@ fn main() -> Result<(), Error> {
             continue;
         }
 
-        let task_regex = Regex::new(r"(\d{2}:\d{2}) - (.*)").unwrap();
-        if task_regex.is_match(&current_line) {
-            println!("Matched task: {}", &current_line);
-
-            let captures = task_regex.captures(&current_line).unwrap();
-            let time_str = captures.get(1).unwrap().as_str();
-
-            let date = current_date.unwrap();
-            let time = NaiveTime::parse_from_str(time_str, "%H:%M").unwrap();
-
-            let date_time = NaiveDateTime::new(date, time);
-            println!("Parsed: {}", date_time)
+        let time = parse_task_time(&current_line);
+        if time.is_none() {
+            continue;
         }
+
+        let date_time = NaiveDateTime::new(current_date.unwrap(), time.unwrap());
+        println!("Parsed: {}", date_time);
     }
 
     Ok(())
@@ -62,4 +56,18 @@ fn parse_date_heading(str : &String) -> Option<NaiveDate> {
     }
 
     return None;
+}
+
+fn parse_task_time(str: &String) -> Option<NaiveTime> {
+    let task_regex = Regex::new(r"(\d{2}:\d{2}) - (.*)").unwrap();
+    if !task_regex.is_match(&str) {
+        return None;
+    }
+
+    println!("Matched task: {}", &str);
+
+    let captures = task_regex.captures(&str).unwrap();
+    let time_str = captures.get(1).unwrap().as_str();
+
+    return Some(NaiveTime::parse_from_str(time_str, "%H:%M").unwrap());
 }
