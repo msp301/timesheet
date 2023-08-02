@@ -17,6 +17,7 @@ fn main() -> Result<(), Error> {
     let reader = BufReader::new(fh);
 
     let mut current_date: Option<NaiveDate> = None;
+    let mut previous_task_date_time: Option<NaiveDateTime> = None;
 
     for line in reader.lines() {
         let current_line = line?;
@@ -35,7 +36,21 @@ fn main() -> Result<(), Error> {
         }
 
         let date_time = NaiveDateTime::new(current_date.unwrap(), time.unwrap());
-        println!("Parsed: {}", date_time);
+
+        if previous_task_date_time.is_none() {
+            previous_task_date_time = Some(date_time);
+            continue;
+        }
+
+        let duration = date_time.signed_duration_since(previous_task_date_time.unwrap());
+        let task_duration = duration.num_minutes() as f64 / 60.0;
+
+        let hours = task_duration as i64;
+        let mins = (task_duration.fract() * 60.0) as i64;
+
+        println!("{}h {}m", hours, mins);
+
+        previous_task_date_time = Some(date_time);
     }
 
     Ok(())
