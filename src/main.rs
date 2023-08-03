@@ -23,6 +23,7 @@ fn main() -> Result<(), Error> {
         let current_line = line?;
         if current_line.starts_with("## ") {
             current_date = parse_date_heading(&current_line);
+            previous_task_date_time = None;
             continue;
         }
 
