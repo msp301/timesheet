@@ -57,14 +57,14 @@ fn main() -> Result<(), Error> {
 }
 
 fn parse_date_heading(str : &String) -> Option<NaiveDate> {
-    let h2_regex = Regex::new(r"## (\w{3}) (\d{1,2})\w{2} (\w+) (\d{4})").unwrap();
+    let h2_regex = Regex::new(r"## \w+ (\d{1,2})\w{2} (\w+) (\d{4})").unwrap();
     if h2_regex.is_match(&str) {
         println!("Matched line: {}", str);
 
         let captures = h2_regex.captures(&str).unwrap();
-        let day = captures.get(2).unwrap().as_str();
-        let month = captures.get(3).unwrap().as_str();
-        let year = captures.get(4).unwrap().as_str();
+        let day = captures.get(1).unwrap().as_str();
+        let month = captures.get(2).unwrap().as_str();
+        let year = captures.get(3).unwrap().as_str();
 
         let date_str = format!("{} {} {}", day, month, year);
         return Some(NaiveDate::parse_from_str(&date_str, "%d %B %Y").unwrap());
