@@ -2,18 +2,35 @@ use std::fs::File;
 use std::io::{BufReader, BufRead, Error};
 
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
-use clap::Parser;
+use clap::{Parser, Subcommand};
 use regex::Regex;
 
 #[derive(Parser)]
 struct Cli {
-    path: std::path::PathBuf,
+    #[command(subcommand)]
+    command: Command,
+
+    #[arg(global=true)]
+    path: Option<std::path::PathBuf>,
+}
+
+#[derive(Subcommand)]
+enum Command {
+    Parse,
 }
 
 fn main() -> Result<(), Error> {
     let args = Cli::parse();
+    let command = &args.command;
+    let filepath = args.path.expect("timesheet file required");
 
-    let fh = File::open(&args.path)?;
+    match command {
+        Command::Parse => return parse_timesheet(filepath),
+    }
+}
+
+fn parse_timesheet(filepath: std::path::PathBuf) -> Result<(), Error> {
+    let fh = File::open(&filepath)?;
     let reader = BufReader::new(fh);
 
     let mut current_date: Option<NaiveDate> = None;
