@@ -1,5 +1,5 @@
-use std::fs::File;
-use std::io::{BufReader, BufRead, Error};
+use std::fs::{File, OpenOptions};
+use std::io::{BufReader, BufRead, Error, Write};
 
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use clap::{Parser, Subcommand};
@@ -17,6 +17,9 @@ struct Cli {
 #[derive(Subcommand)]
 enum Command {
     Parse,
+    Start {
+        task: String,
+    },
 }
 
 fn main() -> Result<(), Error> {
@@ -24,9 +27,21 @@ fn main() -> Result<(), Error> {
     let command = &args.command;
     let filepath = args.path.expect("timesheet file required");
 
-    match command {
-        Command::Parse => return parse_timesheet(filepath),
+    return match command {
+        Command::Parse => parse_timesheet(filepath),
+        Command::Start { task } => start_task(filepath, &task),
     }
+}
+
+fn start_task(filepath: std::path::PathBuf, task: &String) -> Result<(), Error> {
+    let fh = OpenOptions::new().append(true).open(&filepath).expect("Failed to open timesheet file");
+
+    // TODO: Confirm if date heading exists for today's date
+    // TODO: Write date heading line (if needed)
+    // TODO: Add task line with current time as start time
+    write!(&fh, "TIME - {}", task)?;
+
+    Ok(())
 }
 
 fn parse_timesheet(filepath: std::path::PathBuf) -> Result<(), Error> {
