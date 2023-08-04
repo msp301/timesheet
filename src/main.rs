@@ -1,7 +1,7 @@
 use std::fs::{File, OpenOptions};
 use std::io::{BufReader, BufRead, Error, Write};
 
-use chrono::{NaiveDate, NaiveDateTime, NaiveTime, Utc, Datelike};
+use chrono::{NaiveDate, NaiveDateTime, NaiveTime, Datelike, Local};
 use clap::{Parser, Subcommand};
 use ordinal::Ordinal;
 use regex::Regex;
@@ -40,7 +40,7 @@ fn start_task(filepath: std::path::PathBuf, task: &String) -> Result<(), Error> 
     let rev_lines = RevLines::new(&read_fh);
 
     let mut found_date_heading = false;
-    let mut latest_date = Utc::now().date_naive();
+    let mut latest_date = Local::now().date_naive();
     for line in rev_lines {
         let current_line = line.expect("Failed to read line");
         let date = parse_date_heading(&current_line);
@@ -53,14 +53,16 @@ fn start_task(filepath: std::path::PathBuf, task: &String) -> Result<(), Error> 
 
     let write_fh = OpenOptions::new().append(true).open(&filepath).expect("Failed to open timesheet file");
 
-    let todays_date = Utc::now().date_naive();
+    let todays_date = Local::now().date_naive();
     if !found_date_heading || (found_date_heading && !latest_date.eq(&todays_date)) {
         let formatted_date = format!("{} {} {}", todays_date.weekday(), Ordinal(todays_date.day()), todays_date.format("%B %Y"));
         writeln!(&write_fh, "\n## {}\n", formatted_date)?;
     }
 
-    // TODO: Add task line with current time as start time
-    writeln!(&write_fh, "TIME - {}", task)?;
+    let time_now = Local::now().naive_local();
+    let task_line = format!("{} - {}", time_now.format("%H:%M"), task);
+    writeln!(&write_fh, "{}", task_line)?;
+    println!("{}", task_line);
 
     Ok(())
 }
