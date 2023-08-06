@@ -55,8 +55,7 @@ fn start_task(filepath: std::path::PathBuf, task: &String) -> Result<(), Error> 
 
     let todays_date = Local::now().date_naive();
     if !found_date_heading || (found_date_heading && !latest_date.eq(&todays_date)) {
-        let formatted_date = format!("{} {} {}", todays_date.weekday(), Ordinal(todays_date.day()), todays_date.format("%B %Y"));
-        writeln!(&write_fh, "\n## {}\n", formatted_date)?;
+        writeln!(&write_fh, "\n## {}\n", format_weekday(todays_date))?;
     }
 
     let time_now = Local::now().naive_local();
@@ -79,6 +78,8 @@ fn parse_timesheet(filepath: std::path::PathBuf) -> Result<(), Error> {
         if current_line.starts_with("## ") {
             current_date = parse_date_heading(&current_line);
             previous_task_date_time = None;
+
+            println!("\n{}\n", format_weekday(current_date.unwrap()));
             continue;
         }
 
@@ -99,12 +100,10 @@ fn parse_timesheet(filepath: std::path::PathBuf) -> Result<(), Error> {
         }
 
         let duration = date_time.signed_duration_since(previous_task_date_time.unwrap());
-        let task_duration = duration.num_minutes() as f64 / 60.0;
+        let duration_str = format_jira_tempo(duration.num_minutes());
+        let task = extract_task(&current_line);
 
-        let hours = task_duration as i64;
-        let mins = (task_duration.fract() * 60.0) as i64;
-
-        println!("{}h {}m", hours, mins);
+        println!("{:<6} {}", duration_str, task);
 
         previous_task_date_time = Some(date_time);
     }
@@ -115,8 +114,6 @@ fn parse_timesheet(filepath: std::path::PathBuf) -> Result<(), Error> {
 fn parse_date_heading(str : &String) -> Option<NaiveDate> {
     let h2_regex = Regex::new(r"## \w+ (\d{1,2})\w{2} (\w+) (\d{4})").unwrap();
     if h2_regex.is_match(&str) {
-        println!("Matched line: {}", str);
-
         let captures = h2_regex.captures(&str).unwrap();
         let day = captures.get(1).unwrap().as_str();
         let month = captures.get(2).unwrap().as_str();
@@ -135,10 +132,37 @@ fn parse_task_time(str: &String) -> Option<NaiveTime> {
         return None;
     }
 
-    println!("Matched task: {}", &str);
-
     let captures = task_regex.captures(&str).unwrap();
     let time_str = captures.get(1).unwrap().as_str();
 
     return Some(NaiveTime::parse_from_str(time_str, "%H:%M").unwrap());
+}
+
+fn extract_task(str: &String) -> String {
+    let result = str.split_once("-").unwrap().1;
+    return result.to_string();
+}
+
+fn format_weekday(date: NaiveDate) -> String {
+    let formatted_date = format!("{} {} {}", date.weekday(), Ordinal(date.day()), date.format("%B %Y"));
+    return formatted_date;
+}
+
+fn format_jira_tempo(mins: i64) -> String {
+    let task_duration = mins as f64 / 60.0;
+
+    let hours = task_duration as i64;
+    let mins = (task_duration.fract() * 60.0) as i64;
+
+    let mut time_str = "".to_owned();
+    if hours > 0 {
+        let hours_str = format!("{}h", hours);
+        time_str.push_str(&hours_str);
+    }
+    if mins > 0 {
+        let mins_str = format!("{}m", mins);
+        time_str.push_str(&mins_str);
+    }
+
+    return time_str;
 }
