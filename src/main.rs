@@ -30,7 +30,7 @@ fn main() -> Result<(), Error> {
     let filepath = args.path.expect("timesheet file required");
 
     return match command {
-        Command::Parse => parse_timesheet(filepath),
+        Command::Parse => render_timesheet(filepath),
         Command::Start { task } => start_task(filepath, &task),
     }
 }
@@ -66,20 +66,62 @@ fn start_task(filepath: std::path::PathBuf, task: &String) -> Result<(), Error> 
     Ok(())
 }
 
-fn parse_timesheet(filepath: std::path::PathBuf) -> Result<(), Error> {
+fn render_timesheet(filepath: std::path::PathBuf) -> Result<(), Error> {
+    let entries = parse_timesheet(filepath).unwrap();
+
+    let mut previous_date: Option<NaiveDate> = None;
+
+    let mut index = 0;
+    let mut iter = entries.iter();
+    while let Some(entry) = iter.next() {
+        let start = entry.start;
+        let current_date = NaiveDate::from(start);
+
+        if previous_date.is_none() || !previous_date.unwrap().eq(&current_date) {
+            println!("\n{}\n", format_weekday(current_date));
+        }
+
+        let stub_entry = Entry { start: Local::now().naive_local(), name: "Stub".to_string() };
+        let next = entries.get(index + 1).unwrap_or(&stub_entry);
+
+        let duration = next.start.signed_duration_since(start);
+        let duration_str = format_jira_tempo(duration.num_minutes());
+        let task = &entry.name;
+
+        println!("{:<6} {}", duration_str, task);
+
+        let next_task = &next.name;
+        if next_task == "END" {
+            iter.next();
+            index += 1;
+        }
+
+        previous_date = Some(current_date);
+
+        index += 1;
+    }
+
+    Ok(())
+}
+
+struct Entry {
+    start: NaiveDateTime,
+    name: String,
+}
+
+fn parse_timesheet(filepath: std::path::PathBuf) -> Result<Vec<Entry>, Error> {
     let fh = File::open(&filepath)?;
     let reader = BufReader::new(fh);
 
+    let mut parsed_entries: Vec<Entry> = vec![];
+
     let mut current_date: Option<NaiveDate> = None;
-    let mut previous_task_date_time: Option<NaiveDateTime> = None;
 
     for line in reader.lines() {
         let current_line = line?;
         if current_line.starts_with("## ") {
             current_date = parse_date_heading(&current_line);
-            previous_task_date_time = None;
 
-            println!("\n{}\n", format_weekday(current_date.unwrap()));
             continue;
         }
 
@@ -93,22 +135,12 @@ fn parse_timesheet(filepath: std::path::PathBuf) -> Result<(), Error> {
         }
 
         let date_time = NaiveDateTime::new(current_date.unwrap(), time.unwrap());
-
-        if previous_task_date_time.is_none() {
-            previous_task_date_time = Some(date_time);
-            continue;
-        }
-
-        let duration = date_time.signed_duration_since(previous_task_date_time.unwrap());
-        let duration_str = format_jira_tempo(duration.num_minutes());
         let task = extract_task(&current_line);
 
-        println!("{:<6} {}", duration_str, task);
-
-        previous_task_date_time = Some(date_time);
+        parsed_entries.push(Entry { start: date_time, name: task });
     }
 
-    Ok(())
+    Ok(parsed_entries)
 }
 
 fn parse_date_heading(str : &String) -> Option<NaiveDate> {
@@ -140,7 +172,7 @@ fn parse_task_time(str: &String) -> Option<NaiveTime> {
 
 fn extract_task(str: &String) -> String {
     let result = str.split_once("-").unwrap().1;
-    return result.to_string();
+    return result.trim().to_string();
 }
 
 fn format_weekday(date: NaiveDate) -> String {
