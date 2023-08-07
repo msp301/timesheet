@@ -22,6 +22,7 @@ enum Command {
     Start {
         task: String,
     },
+    End,
 }
 
 fn main() -> Result<(), Error> {
@@ -32,6 +33,7 @@ fn main() -> Result<(), Error> {
     return match command {
         Command::Parse => render_timesheet(filepath),
         Command::Start { task } => start_task(filepath, &task),
+        Command::End => start_task(filepath, &"END".to_string()),
     }
 }
 
