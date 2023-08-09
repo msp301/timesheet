@@ -32,12 +32,54 @@ fn main() -> Result<(), Error> {
 
     return match command {
         Command::Parse => render_timesheet(filepath),
-        Command::Start { task } => start_task(filepath, &task),
-        Command::End => start_task(filepath, &"END".to_string()),
+        Command::Start { task } => start_task(&filepath, &task),
+        Command::End => end_task(filepath),
     }
 }
 
-fn start_task(filepath: std::path::PathBuf, task: &String) -> Result<(), Error> {
+fn end_task(filepath: std::path::PathBuf) -> Result<(), Error> {
+    let end_task = String::from("END");
+    let read_fh = File::open(&filepath).unwrap();
+    let rev_lines = RevLines::new(&read_fh);
+
+    let mut latest_task: Option<String> = None;
+    for line in rev_lines {
+        let current_line = line.expect("Failed to read line");
+        if current_line.trim().eq("") {
+            continue;
+        }
+
+        if latest_task.is_some() {
+            let date = parse_date_heading(&current_line);
+            if date.is_none() {
+                continue;
+            }
+
+            let latest_date = date.unwrap();
+            let todays_date = Local::now().date_naive();
+
+            if !latest_date.eq(&todays_date) {
+                eprintln!("No current task");
+                break;
+            }
+
+            let _ = start_task(&filepath, &end_task);
+            break;
+        }
+
+        let task = extract_task(&current_line);
+        if task.eq("") || task.eq(&end_task){
+            eprintln!("No current task");
+            break;
+        }
+
+        latest_task = Some(task);
+    }
+
+    Ok(())
+}
+
+fn start_task(filepath: &std::path::PathBuf, task: &String) -> Result<(), Error> {
     let read_fh = File::open(&filepath).unwrap();
     let rev_lines = RevLines::new(&read_fh);
 
@@ -173,7 +215,7 @@ fn parse_task_time(str: &String) -> Option<NaiveTime> {
 }
 
 fn extract_task(str: &String) -> String {
-    let result = str.split_once("-").unwrap().1;
+    let result = str.split_once("-").unwrap_or_default().1;
     return result.trim().to_string();
 }
 
