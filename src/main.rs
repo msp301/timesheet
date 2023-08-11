@@ -121,18 +121,22 @@ fn render_timesheet(filepath: std::path::PathBuf) -> Result<(), Error> {
         let start = entry.start;
         let current_date = NaiveDate::from(start);
 
-        if previous_date.is_none() || !previous_date.unwrap().eq(&current_date) {
-            println!("\n{}\n", format_weekday(current_date));
-        }
-
         let stub_entry = Entry { start: Local::now().naive_local(), name: "Stub".to_string() };
         let next = entries.get(index + 1).unwrap_or(&stub_entry);
 
         let duration = next.start.signed_duration_since(start);
-        let duration_str = format_jira_tempo(duration.num_minutes());
-        let task = &entry.name;
+        let duration_mins = duration.num_minutes();
 
-        println!("{:<6} {}", duration_str, task);
+        if duration_mins > 0 {
+            if previous_date.is_none() || !previous_date.unwrap().eq(&current_date) {
+                println!("\n{}\n", format_weekday(current_date));
+            }
+
+            let duration_str = format_jira_tempo(duration_mins);
+            let task = &entry.name;
+
+            println!("{:<6} {}", duration_str, task);
+        }
 
         let next_task = &next.name;
         if next_task == "END" {
