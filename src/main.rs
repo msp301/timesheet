@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fs::{File, OpenOptions};
 use std::io::{BufReader, BufRead, Error, Write};
 
@@ -113,7 +114,7 @@ fn start_task(filepath: &std::path::PathBuf, task: &String) -> Result<(), Error>
 fn render_timesheet(filepath: std::path::PathBuf) -> Result<(), Error> {
     let entries = parse_timesheet(filepath).unwrap();
 
-    let mut previous_date: Option<NaiveDate> = None;
+    let mut tasks: HashMap<String, i64> = HashMap::new();
 
     let mut index = 0;
     let mut iter = entries.iter();
@@ -124,27 +125,39 @@ fn render_timesheet(filepath: std::path::PathBuf) -> Result<(), Error> {
         let stub_entry = Entry { start: Local::now().naive_local(), name: "Stub".to_string() };
         let next = entries.get(index + 1).unwrap_or(&stub_entry);
 
-        let duration = next.start.signed_duration_since(start);
-        let duration_mins = duration.num_minutes();
-
-        if duration_mins > 0 {
-            if previous_date.is_none() || !previous_date.unwrap().eq(&current_date) {
-                println!("\n{}\n", format_weekday(current_date));
-            }
-
-            let duration_str = format_jira_tempo(duration_mins);
-            let task = &entry.name;
-
-            println!("{:<6} {}", duration_str, task);
-        }
-
+        let mut next_date = NaiveDate::from(next.start);
         let next_task = &next.name;
         if next_task == "END" {
             iter.next();
             index += 1;
+            let next_entry = entries.get(index + 1).unwrap_or(&stub_entry);
+            next_date = NaiveDate::from(next_entry.start);
         }
 
-        previous_date = Some(current_date);
+        let duration = next.start.signed_duration_since(start);
+        let duration_mins = duration.num_minutes();
+
+        if duration_mins > 0 {
+            let task = &entry.name;
+            let task_duration = tasks.get(task).unwrap_or(&0) + duration_mins;
+            tasks.insert(String::from(task), task_duration);
+
+            if !next_date.eq(&current_date) {
+                let mut total_mins = 0;
+
+                println!("\n{}\n", format_weekday(current_date));
+
+                for (task, mins) in tasks.iter() {
+                    total_mins += mins;
+                    let duration_str = format_jira_tempo(*mins);
+                    println!("{:<6} {}", duration_str, task);
+                }
+
+                println!("\nTotal: {:<6}", format_jira_tempo(total_mins));
+
+                tasks = HashMap::new();
+            }
+        }
 
         index += 1;
     }
