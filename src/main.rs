@@ -142,7 +142,9 @@ fn render_timesheet(filepath: std::path::PathBuf) -> Result<(), Error> {
             let task_duration = tasks.get(task).unwrap_or(&0) + duration_mins;
             tasks.insert(String::from(task), task_duration);
 
-            if !next_date.eq(&current_date) {
+            let is_last_entry = entries.len() == index + 1;
+
+            if !next_date.eq(&current_date) || is_last_entry {
                 let mut total_mins = 0;
 
                 println!("\n{}\n", format_weekday(current_date));
