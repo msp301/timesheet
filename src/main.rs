@@ -154,10 +154,11 @@ fn render_timesheet(filepath: std::path::PathBuf) -> Result<(), Error> {
                         total_mins += mins;
                     }
                     let duration_str = format_jira_tempo(*mins);
-                    println!("{:<6} {}", duration_str, task);
+                    let decimal_hours = decimal_hours(*mins);
+                    println!("{:<6} | {:<5.2} | {}", duration_str, decimal_hours, task);
                 }
 
-                println!("\nTotal: {:<6}", format_jira_tempo(total_mins));
+                println!("\nTotal: {} | {:.2}", format_jira_tempo(total_mins), decimal_hours(total_mins));
 
                 tasks = HashMap::new();
             }
@@ -252,8 +253,12 @@ fn format_weekday(date: NaiveDate) -> String {
     return formatted_date;
 }
 
+fn decimal_hours(mins: i64) -> f64 {
+    return mins as f64 / 60.0;
+}
+
 fn format_jira_tempo(mins: i64) -> String {
-    let task_duration = mins as f64 / 60.0;
+    let task_duration = decimal_hours(mins);
 
     let hours = task_duration as i64;
     let mins = (task_duration.fract() * 60.0) as i64;
