@@ -150,7 +150,9 @@ fn render_timesheet(filepath: std::path::PathBuf) -> Result<(), Error> {
                 println!("\n{}\n", format_weekday(current_date));
 
                 for (task, mins) in tasks.iter() {
-                    total_mins += mins;
+                    if is_work_task(task) {
+                        total_mins += mins;
+                    }
                     let duration_str = format_jira_tempo(*mins);
                     println!("{:<6} {}", duration_str, task);
                 }
@@ -236,6 +238,13 @@ fn parse_task_time(str: &String) -> Option<NaiveTime> {
 fn extract_task(str: &String) -> String {
     let result = str.split_once("-").unwrap_or_default().1;
     return result.trim().to_string();
+}
+
+fn is_work_task(task: &str) -> bool {
+    return match task {
+        "Break" | "Lunch" => false,
+        _ => true,
+    }
 }
 
 fn format_weekday(date: NaiveDate) -> String {
