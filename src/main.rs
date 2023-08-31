@@ -114,6 +114,7 @@ fn start_task(filepath: &std::path::PathBuf, task: &String) -> Result<(), Error>
 fn render_timesheet(filepath: std::path::PathBuf) -> Result<(), Error> {
     let entries = parse_timesheet(filepath).unwrap();
 
+    let mut week_total_mins = 0;
     let mut tasks: HashMap<String, i64> = HashMap::new();
 
     let mut index = 0;
@@ -159,6 +160,15 @@ fn render_timesheet(filepath: std::path::PathBuf) -> Result<(), Error> {
                 }
 
                 println!("\nTotal: {} | {:.2}", format_jira_tempo(total_mins), decimal_hours(total_mins));
+
+                week_total_mins += total_mins;
+
+                let this_week = current_date.iso_week().week();
+                let next_week = next_date.iso_week().week();
+                if this_week != next_week || is_last_entry {
+                    println!("\nWeek Total: {} | {:.2}", format_jira_tempo(week_total_mins), decimal_hours(week_total_mins));
+                    week_total_mins = 0;
+                }
 
                 tasks = HashMap::new();
             }
