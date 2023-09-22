@@ -11,3 +11,4 @@ clap = { version = "4.3.19", features = ["derive"] }
 ordinal = "0.3.2"
 regex = "1.9.1"
 rev_lines = "0.3.0"
+lazy_static = { version = "1.4.0", features = [] }

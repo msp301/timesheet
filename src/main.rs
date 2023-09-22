@@ -7,6 +7,7 @@ use clap::{Parser, Subcommand};
 use ordinal::Ordinal;
 use regex::Regex;
 use rev_lines::RevLines;
+use lazy_static::lazy_static;
 
 #[derive(Parser)]
 struct Cli {
@@ -220,9 +221,12 @@ fn parse_timesheet(filepath: std::path::PathBuf) -> Result<Vec<Entry>, Error> {
 }
 
 fn parse_date_heading(str : &String) -> Option<NaiveDate> {
-    let h2_regex = Regex::new(r"## \w+ (\d{1,2})\w{2} (\w+) (\d{4})").unwrap();
-    if h2_regex.is_match(&str) {
-        let captures = h2_regex.captures(&str).unwrap();
+    lazy_static! {
+        static ref H2_REGEX : Regex = Regex::new(r"## \w+ (\d{1,2})\w{2} (\w+) (\d{4})").unwrap();
+    }
+
+    if H2_REGEX.is_match(&str) {
+        let captures = H2_REGEX.captures(&str).unwrap();
         let day = captures.get(1).unwrap().as_str();
         let month = captures.get(2).unwrap().as_str();
         let year = captures.get(3).unwrap().as_str();
@@ -235,12 +239,15 @@ fn parse_date_heading(str : &String) -> Option<NaiveDate> {
 }
 
 fn parse_task_time(str: &String) -> Option<NaiveTime> {
-    let task_regex = Regex::new(r"(\d{2}:\d{2}) - (.*)").unwrap();
-    if !task_regex.is_match(&str) {
+    lazy_static! {
+        static ref TASK_REGEX : Regex = Regex::new(r"(\d{2}:\d{2}) - (.*)").unwrap();
+    }
+
+    if !TASK_REGEX.is_match(&str) {
         return None;
     }
 
-    let captures = task_regex.captures(&str).unwrap();
+    let captures = TASK_REGEX.captures(&str).unwrap();
     let time_str = captures.get(1).unwrap().as_str();
 
     return Some(NaiveTime::parse_from_str(time_str, "%H:%M").unwrap());
