@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::fs::{File, OpenOptions};
 use std::io::{BufReader, BufRead, Error, Write};
 
-use chrono::{NaiveDate, NaiveDateTime, NaiveTime, Datelike, Local};
+use chrono::{Months, NaiveDate, NaiveDateTime, NaiveTime, Datelike, Local};
 use clap::{Parser, Subcommand};
 use ordinal::Ordinal;
 use regex::Regex;
@@ -21,6 +21,7 @@ struct Cli {
 #[derive(Subcommand)]
 enum Command {
     Parse,
+    Period,
     Start {
         task: String,
     },
@@ -34,6 +35,7 @@ fn main() -> Result<(), Error> {
 
     return match command {
         Command::Parse => render_timesheet(filepath),
+        Command::Period => Ok(period()),
         Command::Start { task } => start_task(&filepath, &task),
         Command::End => end_task(filepath),
     }
@@ -291,4 +293,24 @@ fn format_jira_tempo(mins: i64) -> String {
     }
 
     return time_str;
+}
+
+fn period() {
+    let period_start = 31;
+
+    let today = Local::now().date_naive();
+    let last_day_of_month = last_day_of_month(today).unwrap();
+
+    let this_period_start_date = today.with_day(period_start).unwrap();
+    let next_period_start_date = this_period_start_date.checked_add_months(Months::new(1)).unwrap();
+
+    println!("{} - {}", this_period_start_date, next_period_start_date);
+}
+
+fn last_day_of_month(date: NaiveDate) -> Option<NaiveDate> {
+    let year = date.year();
+    let month = date.month();
+    let last_day = NaiveDate::from_ymd_opt(year, month + 1, 1).or_else(|| NaiveDate::from_ymd_opt(year + 1, 1, 1))?.pred_opt();
+
+    return last_day;
 }
