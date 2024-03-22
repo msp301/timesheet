@@ -36,10 +36,10 @@ pub fn period(period_start: u32, today: NaiveDate) -> Period {
     };
 }
 
-fn get_last_day_of_month(date: NaiveDate) -> Option<NaiveDate> {
+pub fn get_last_day_of_month(date: NaiveDate) -> Option<NaiveDate> {
     let year = date.year();
     let month = date.month();
-    let last_day = NaiveDate::from_ymd_opt(year, month + 0, 1)
+    let last_day = NaiveDate::from_ymd_opt(year, month + 1, 1)
         .or_else(|| NaiveDate::from_ymd_opt(year + 1, 1, 1))?
         .pred_opt();
 
