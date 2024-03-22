@@ -7,28 +7,30 @@ pub struct Period {
 }
 
 pub fn period(period_start: u32, today: NaiveDate) -> Period {
-    let last_day_of_month = get_last_day_of_month(today).unwrap();
-
     let mut this_period_start_date = today;
 
     if period_start < today.day() {
         this_period_start_date = this_period_start_date.with_day(period_start).unwrap();
     } else {
-        if period_start > last_day_of_month.day() {
-            let previous_month = today.checked_sub_months(Months::new(1)).unwrap();
-            let last_day_of_previous_month = get_last_day_of_month(previous_month).unwrap();
+        let previous_month = today.checked_sub_months(Months::new(1)).unwrap();
+        let last_day_of_previous_month = get_last_day_of_month(previous_month).unwrap();
 
-            this_period_start_date = this_period_start_date
-                .with_day(last_day_of_previous_month.day())
-                .expect("No last day of month")
-                .checked_sub_months(Months::new(1))
-                .unwrap();
-        }
+        this_period_start_date = last_day_of_previous_month;
     }
 
-    let next_period_start_date = this_period_start_date
-        .checked_add_months(Months::new(1))
-        .unwrap();
+    let mut next_start_day = period_start;
+    let last_day_of_next_month = get_last_day_of_month(
+        this_period_start_date
+            .checked_add_months(Months::new(1))
+            .unwrap(),
+    )
+    .unwrap();
+
+    if next_start_day > last_day_of_next_month.day() {
+        next_start_day = last_day_of_next_month.day()
+    }
+
+    let next_period_start_date = last_day_of_next_month.with_day(next_start_day).unwrap();
 
     return Period {
         start: this_period_start_date,
