@@ -7,16 +7,18 @@ pub struct Period {
 }
 
 pub fn period(period_start: u32, today: NaiveDate) -> Period {
-    let mut this_period_start_date = today;
+    let previous_month = today.checked_sub_months(Months::new(1)).unwrap();
+    let last_day_previous_month = get_last_day_of_month(previous_month).unwrap();
 
-    if period_start < today.day() {
-        this_period_start_date = this_period_start_date.with_day(period_start).unwrap();
-    } else {
-        let previous_month = today.checked_sub_months(Months::new(1)).unwrap();
-        let last_day_of_previous_month = get_last_day_of_month(previous_month).unwrap();
-
-        this_period_start_date = last_day_of_previous_month;
-    }
+    let this_period_start_date = match period_start {
+        i if i == today.day() => today,
+        i if i < today.day() => today.with_day(period_start).unwrap(),
+        i if i < last_day_previous_month.day() => previous_month.with_day(period_start).unwrap(),
+        _ => {
+            let previous_month = today.checked_sub_months(Months::new(1)).unwrap();
+            get_last_day_of_month(previous_month).unwrap()
+        }
+    };
 
     let mut next_start_day = period_start;
     let last_day_of_next_month = get_last_day_of_month(
