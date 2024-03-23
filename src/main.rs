@@ -1,13 +1,13 @@
 use std::collections::HashMap;
 use std::fs::{File, OpenOptions};
-use std::io::{BufReader, BufRead, Error, Write};
+use std::io::{BufRead, BufReader, Error, Write};
 
-use chrono::{ NaiveDate, NaiveDateTime, NaiveTime, Datelike, Local};
+use chrono::{Datelike, Local, NaiveDate, NaiveDateTime, NaiveTime};
 use clap::{Parser, Subcommand};
+use lazy_static::lazy_static;
 use ordinal::Ordinal;
 use regex::Regex;
 use rev_lines::RevLines;
-use lazy_static::lazy_static;
 
 mod period;
 
@@ -16,7 +16,7 @@ struct Cli {
     #[command(subcommand)]
     command: Command,
 
-    #[arg(global=true)]
+    #[arg(global = true)]
     path: Option<std::path::PathBuf>,
 }
 
@@ -24,9 +24,7 @@ struct Cli {
 enum Command {
     Parse,
     // Period,
-    Start {
-        task: String,
-    },
+    Start { task: String },
     End,
 }
 
@@ -40,7 +38,7 @@ fn main() -> Result<(), Error> {
         // Command::Period => Ok(period::period(1, Local::now().date_naive())),
         Command::Start { task } => start_task(&filepath, &task),
         Command::End => end_task(filepath),
-    }
+    };
 }
 
 fn end_task(filepath: std::path::PathBuf) -> Result<(), Error> {
@@ -74,7 +72,7 @@ fn end_task(filepath: std::path::PathBuf) -> Result<(), Error> {
         }
 
         let task = extract_task(&current_line);
-        if task.eq("") || task.eq(&end_task){
+        if task.eq("") || task.eq(&end_task) {
             eprintln!("No current task");
             break;
         }
@@ -101,7 +99,10 @@ fn start_task(filepath: &std::path::PathBuf, task: &String) -> Result<(), Error>
         }
     }
 
-    let write_fh = OpenOptions::new().append(true).open(&filepath).expect("Failed to open timesheet file");
+    let write_fh = OpenOptions::new()
+        .append(true)
+        .open(&filepath)
+        .expect("Failed to open timesheet file");
 
     let todays_date = Local::now().date_naive();
     if !found_date_heading || (found_date_heading && !latest_date.eq(&todays_date)) {
@@ -128,7 +129,10 @@ fn render_timesheet(filepath: std::path::PathBuf) -> Result<(), Error> {
         let start = entry.start;
         let current_date = NaiveDate::from(start);
 
-        let stub_entry = Entry { start: Local::now().naive_local(), name: "Stub".to_string() };
+        let stub_entry = Entry {
+            start: Local::now().naive_local(),
+            name: "Stub".to_string(),
+        };
         let next = entries.get(index + 1).unwrap_or(&stub_entry);
 
         let mut next_date = NaiveDate::from(next.start);
@@ -164,14 +168,22 @@ fn render_timesheet(filepath: std::path::PathBuf) -> Result<(), Error> {
                     println!("{:<6} | {:<5.2} | {}", duration_str, decimal_hours, task);
                 }
 
-                println!("\nTotal: {} | {:.2}", format_jira_tempo(total_mins), decimal_hours(total_mins));
+                println!(
+                    "\nTotal: {} | {:.2}",
+                    format_jira_tempo(total_mins),
+                    decimal_hours(total_mins)
+                );
 
                 week_total_mins += total_mins;
 
                 let this_week = current_date.iso_week().week();
                 let next_week = next_date.iso_week().week();
                 if this_week != next_week || is_last_entry {
-                    println!("\nWeek Total: {} | {:.2}", format_jira_tempo(week_total_mins), decimal_hours(week_total_mins));
+                    println!(
+                        "\nWeek Total: {} | {:.2}",
+                        format_jira_tempo(week_total_mins),
+                        decimal_hours(week_total_mins)
+                    );
                     week_total_mins = 0;
                 }
 
@@ -218,15 +230,18 @@ fn parse_timesheet(filepath: std::path::PathBuf) -> Result<Vec<Entry>, Error> {
         let date_time = NaiveDateTime::new(current_date.unwrap(), time.unwrap());
         let task = extract_task(&current_line);
 
-        parsed_entries.push(Entry { start: date_time, name: task });
+        parsed_entries.push(Entry {
+            start: date_time,
+            name: task,
+        });
     }
 
     Ok(parsed_entries)
 }
 
-fn parse_date_heading(str : &String) -> Option<NaiveDate> {
+fn parse_date_heading(str: &String) -> Option<NaiveDate> {
     lazy_static! {
-        static ref H2_REGEX : Regex = Regex::new(r"## \w+ (\d{1,2})\w{2} (\w+) (\d{4})").unwrap();
+        static ref H2_REGEX: Regex = Regex::new(r"## \w+ (\d{1,2})\w{2} (\w+) (\d{4})").unwrap();
     }
 
     if H2_REGEX.is_match(&str) {
@@ -244,7 +259,7 @@ fn parse_date_heading(str : &String) -> Option<NaiveDate> {
 
 fn parse_task_time(str: &String) -> Option<NaiveTime> {
     lazy_static! {
-        static ref TASK_REGEX : Regex = Regex::new(r"(\d{2}:\d{2}) - (.*)").unwrap();
+        static ref TASK_REGEX: Regex = Regex::new(r"(\d{2}:\d{2}) - (.*)").unwrap();
     }
 
     if !TASK_REGEX.is_match(&str) {
@@ -266,11 +281,16 @@ fn is_work_task(task: &str) -> bool {
     return match task {
         "Break" | "Lunch" => false,
         _ => true,
-    }
+    };
 }
 
 fn format_weekday(date: NaiveDate) -> String {
-    let formatted_date = format!("{} {} {}", date.weekday(), Ordinal(date.day()), date.format("%B %Y"));
+    let formatted_date = format!(
+        "{} {} {}",
+        date.weekday(),
+        Ordinal(date.day()),
+        date.format("%B %Y")
+    );
     return formatted_date;
 }
 
@@ -296,4 +316,3 @@ fn format_jira_tempo(mins: i64) -> String {
 
     return time_str;
 }
-
