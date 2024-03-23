@@ -8,6 +8,7 @@ use lazy_static::lazy_static;
 use ordinal::Ordinal;
 use regex::Regex;
 use rev_lines::RevLines;
+use timesheet::period::{get_work_time_in_period, period};
 
 mod period;
 
@@ -120,6 +121,7 @@ fn start_task(filepath: &std::path::PathBuf, task: &String) -> Result<(), Error>
 fn render_timesheet(filepath: std::path::PathBuf) -> Result<(), Error> {
     let entries = parse_timesheet(filepath).unwrap();
 
+    let mut period_total_mins = 0;
     let mut week_total_mins = 0;
     let mut tasks: HashMap<String, i64> = HashMap::new();
 
@@ -185,6 +187,24 @@ fn render_timesheet(filepath: std::path::PathBuf) -> Result<(), Error> {
                         decimal_hours(week_total_mins)
                     );
                     week_total_mins = 0;
+                }
+
+                period_total_mins += total_mins;
+
+                let current_period = period(20, current_date);
+                if current_period.end.lt(&next_date) {
+                    let period_work_time = get_work_time_in_period(&current_period);
+
+                    println!("\nPeriod Start: {}", current_period.start);
+                    println!("\nPeriod End: {}", current_period.end);
+
+                    println!(
+                        "\nPeriod Total: {} | {:2} / {:2}",
+                        format_jira_tempo(period_total_mins),
+                        decimal_hours(period_total_mins),
+                        decimal_hours(period_work_time)
+                    );
+                    period_total_mins = 0;
                 }
 
                 tasks = HashMap::new();

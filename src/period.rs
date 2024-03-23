@@ -1,4 +1,7 @@
-use chrono::{Datelike, Months, NaiveDate};
+use core::f64;
+use std::i64;
+
+use chrono::{Datelike, Months, NaiveDate, Weekday};
 
 #[derive(Debug, PartialEq)]
 pub struct Period {
@@ -38,6 +41,34 @@ pub fn period(period_start: u32, today: NaiveDate) -> Period {
         start: this_period_start_date,
         end: next_period_start_date,
     };
+}
+
+pub fn get_work_time_in_period(period: &Period) -> i64 {
+    let workdays = get_work_days_in_period(period);
+    let workday_hours = 7.5;
+
+    (workdays as f64 * workday_hours * 60.0).round() as i64
+}
+
+pub fn get_work_days_in_period(period: &Period) -> i64 {
+    let period_duration = period.end.signed_duration_since(period.start);
+    let days = period_duration.num_days();
+
+    let week = 7;
+    let workdays_in_week = 5;
+
+    days - ((week - workdays_in_week) * (days / week))
+}
+
+pub fn is_work_day(day: Weekday) -> bool {
+    match day {
+        Weekday::Mon => true,
+        Weekday::Tue => true,
+        Weekday::Wed => true,
+        Weekday::Thu => true,
+        Weekday::Fri => true,
+        _ => false,
+    }
 }
 
 pub fn get_last_day_of_month(date: NaiveDate) -> Option<NaiveDate> {
