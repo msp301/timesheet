@@ -52,7 +52,7 @@ pub fn get_work_time_in_period(period: &Period) -> i64 {
 
 pub fn get_work_days_in_period(period: &Period) -> i64 {
     let period_duration = period.end.signed_duration_since(period.start);
-    let days = period_duration.num_days();
+    let days = period_duration.num_days() + 1;
 
     let mut workdays = 0;
     for i in 0..days {
