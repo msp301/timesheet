@@ -54,10 +54,19 @@ pub fn get_work_days_in_period(period: &Period) -> i64 {
     let period_duration = period.end.signed_duration_since(period.start);
     let days = period_duration.num_days();
 
-    let week = 7;
-    let workdays_in_week = 5;
+    let mut workdays = 0;
+    for i in 0..days {
+        let date = period
+            .start
+            .checked_add_days(chrono::Days::new(i as u64))
+            .unwrap();
 
-    days - ((week - workdays_in_week) * (days / week))
+        if is_work_day(date.weekday()) {
+            workdays += 1;
+        }
+    }
+
+    return workdays;
 }
 
 pub fn is_work_day(day: Weekday) -> bool {
