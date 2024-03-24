@@ -195,11 +195,10 @@ fn render_timesheet(filepath: std::path::PathBuf) -> Result<(), Error> {
                 if current_period.end.lt(&next_date) {
                     let period_work_time = get_work_time_in_period(&current_period);
 
-                    println!("\nPeriod Start: {}", current_period.start);
-                    println!("\nPeriod End: {}", current_period.end);
-
                     println!(
-                        "\nPeriod Total: {} | {:2} / {:2}",
+                        "\nPeriod Total ({} - {}): {} | {:2} / {:2}",
+                        current_period.start,
+                        current_period.end,
                         format_jira_tempo(period_total_mins),
                         decimal_hours(period_total_mins),
                         decimal_hours(period_work_time)
