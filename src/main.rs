@@ -192,7 +192,7 @@ fn render_timesheet(filepath: std::path::PathBuf) -> Result<(), Error> {
                 period_total_mins += total_mins;
 
                 let current_period = period(20, current_date);
-                if current_period.end.lt(&next_date) {
+                if current_period.end.lt(&next_date) || is_last_entry {
                     let period_work_time = get_work_time_in_period(&current_period);
 
                     println!(
