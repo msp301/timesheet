@@ -34,22 +34,17 @@ pub fn period(period_start: u32, today: NaiveDate) -> Period {
         end_day = last_day_of_next_month.day()
     }
 
-    let period_end_date = match end_day {
-        i if i == 0 => last_day_of_next_month.with_day(1).unwrap(),
-        // i if i < last_day_month.day() => last_day_month.with_day(end_day).unwrap(),
-        i if i > last_day_of_next_month.day() => last_day_of_next_month,
-        _ => {
-            let mut month = last_day_of_next_month.month();
-            if period_start > last_day_month.day() {
-                month = last_day_month.month();
-            }
-            last_day_of_next_month
-                .with_day(end_day)
-                .unwrap()
-                .with_month(month)
-                .unwrap()
-        }
-    };
+    let start_month = this_period_start_date.month();
+    let this_month = today.month();
+
+    let mut period_end_date = last_day_of_next_month
+        .with_day(end_day)
+        .unwrap_or_else(|| last_day_of_next_month);
+    if start_month != this_month {
+        period_end_date = today.with_day(end_day).unwrap();
+    } else if this_period_start_date.day() < period_start {
+        period_end_date = today.with_day(end_day).unwrap();
+    }
 
     return Period {
         start: this_period_start_date,
