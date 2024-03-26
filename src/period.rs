@@ -12,18 +12,16 @@ pub struct Period {
 pub fn period(period_start: u32, today: NaiveDate) -> Period {
     let previous_month = today.checked_sub_months(Months::new(1)).unwrap();
     let last_day_previous_month = get_last_day_of_month(previous_month).unwrap();
+    let last_day_month = get_last_day_of_month(today).unwrap();
 
     let this_period_start_date = match period_start {
         i if i == today.day() => today,
         i if i < today.day() => today.with_day(period_start).unwrap(),
         i if i < last_day_previous_month.day() => previous_month.with_day(period_start).unwrap(),
-        _ => {
-            let previous_month = today.checked_sub_months(Months::new(1)).unwrap();
-            get_last_day_of_month(previous_month).unwrap()
-        }
+        i if i > last_day_previous_month.day() => today.with_day(1).unwrap(),
+        _ => last_day_previous_month,
     };
 
-    let mut next_start_day = period_start;
     let last_day_of_next_month = get_last_day_of_month(
         this_period_start_date
             .checked_add_months(Months::new(1))
@@ -31,15 +29,31 @@ pub fn period(period_start: u32, today: NaiveDate) -> Period {
     )
     .unwrap();
 
-    if next_start_day > last_day_of_next_month.day() {
-        next_start_day = last_day_of_next_month.day()
+    let mut end_day = period_start - 1;
+    if period_start > last_day_month.day() {
+        end_day = last_day_of_next_month.day()
     }
 
-    let next_period_start_date = last_day_of_next_month.with_day(next_start_day).unwrap();
+    let period_end_date = match end_day {
+        i if i == 0 => last_day_of_next_month.with_day(1).unwrap(),
+        // i if i < last_day_month.day() => last_day_month.with_day(end_day).unwrap(),
+        i if i > last_day_of_next_month.day() => last_day_of_next_month,
+        _ => {
+            let mut month = last_day_of_next_month.month();
+            if period_start > last_day_month.day() {
+                month = last_day_month.month();
+            }
+            last_day_of_next_month
+                .with_day(end_day)
+                .unwrap()
+                .with_month(month)
+                .unwrap()
+        }
+    };
 
     return Period {
         start: this_period_start_date,
-        end: next_period_start_date,
+        end: period_end_date,
     };
 }
 
