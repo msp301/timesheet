@@ -38,7 +38,15 @@ fn year_boundary_behind() {
 }
 
 #[test]
-fn periods_do_not_overlap() {
+fn periods_do_not_overlap_month_start() {
+    test_period(1, "2024/01/01", "2024/01/01", "2024/01/31");
+    test_period(1, "2024/02/01", "2024/02/01", "2024/02/29");
+    test_period(1, "2024/03/01", "2024/03/01", "2024/03/31");
+    test_period(1, "2024/04/01", "2024/04/01", "2024/04/30");
+}
+
+#[test]
+fn periods_do_not_overlap_month_end() {
     test_period(31, "2024/01/15", "2023/12/31", "2024/01/30");
     test_period(31, "2024/01/31", "2024/01/31", "2024/02/29");
     test_period(31, "2024/03/01", "2024/03/01", "2024/03/30");
