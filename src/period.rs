@@ -39,11 +39,11 @@ pub fn period(period_start: u32, today: NaiveDate) -> Period {
     let this_month = today.month();
 
     let period_end_date = match period_start {
+        i if i == 1 => today.with_day(end_day).unwrap(),
         i if i > this_period_start_date.day() => today.with_day(end_day).unwrap(),
-        i if i <= last_day_of_next_month.day() && start_month == this_month => {
-            last_day_of_next_month.with_day(end_day).unwrap()
+        i if i <= last_day_of_next_month.day() && start_month != this_month => {
+            today.with_day(end_day).unwrap()
         }
-        i if i <= last_day_of_next_month.day() => today.with_day(end_day).unwrap(),
         _ => last_day_of_next_month
             .with_day(end_day)
             .unwrap_or_else(|| last_day_of_next_month),
