@@ -37,6 +37,14 @@ fn year_boundary_behind() {
     test_period(5, "2024/01/01", "2023/12/05", "2024/01/05");
 }
 
+#[test]
+fn periods_do_not_overlap() {
+    test_period(31, "2024/01/15", "2023/12/31", "2024/01/30");
+    test_period(31, "2024/01/31", "2024/01/31", "2024/02/29");
+    test_period(31, "2024/03/01", "2024/03/01", "2024/03/30");
+    test_period(31, "2024/03/31", "2024/03/31", "2024/04/30");
+}
+
 fn test_period(period_start: u32, today: &str, expacted_start: &str, expected_end: &str) {
     let fmt = "%Y/%m/%d";
 
