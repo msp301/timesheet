@@ -2,6 +2,8 @@ use core::f64;
 use std::i64;
 
 use chrono::{Datelike, Months, NaiveDate, Weekday};
+use govuk_bank_holidays::prelude::*;
+use lazy_static::lazy_static;
 
 #[derive(Debug, PartialEq)]
 pub struct Period {
@@ -66,6 +68,8 @@ pub fn get_work_days_in_period(period: &Period) -> i64 {
     let period_duration = period.end.signed_duration_since(period.start);
     let days = period_duration.num_days() + 1;
 
+    let calendar = govuk_bank_holidays::BankHolidayCalendar::cached();
+
     let mut workdays = 0;
     for i in 0..days {
         let date = period
@@ -73,7 +77,7 @@ pub fn get_work_days_in_period(period: &Period) -> i64 {
             .checked_add_days(chrono::Days::new(i as u64))
             .unwrap();
 
-        if is_work_day(date.weekday()) {
+        if is_work_day(date.weekday()) && !calendar.is_holiday(date.into(), None) {
             workdays += 1;
         }
     }

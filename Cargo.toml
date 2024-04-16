@@ -12,3 +12,4 @@ ordinal = "0.3.2"
 regex = "1.9.1"
 rev_lines = "0.3.0"
 lazy_static = { version = "1.4.0", features = [] }
+govuk-bank-holidays = "0.2.0"
