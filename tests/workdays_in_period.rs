@@ -8,7 +8,7 @@ fn five_day_work_week() {
 
 #[test]
 fn work_days_within_month() {
-    test_work_days_in_period("2024/01/01", "2024/01/31", 23);
+    test_work_days_in_period("2024/06/01", "2024/06/30", 20);
 }
 
 #[test]
@@ -23,7 +23,7 @@ fn spanning_months() {
 
 #[test]
 fn same_day() {
-    test_work_days_in_period("2024/01/01", "2024/01/01", 1);
+    test_work_days_in_period("2024/02/01", "2024/02/01", 1);
 }
 
 #[test]
