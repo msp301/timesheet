@@ -298,7 +298,7 @@ fn extract_task(str: &String) -> String {
 
 fn is_work_task(task: &str) -> bool {
     return match task {
-        "Break" | "Lunch" => false,
+        "Bank holiday" | "Break" | "Lunch" => false,
         _ => true,
     };
 }
