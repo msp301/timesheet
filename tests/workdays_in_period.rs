@@ -29,6 +29,7 @@ fn same_day() {
 #[test]
 fn bank_holidays() {
     test_work_days_in_period("2024/05/01", "2024/05/31", 21);
+    test_work_days_in_period("2024/03/21", "2024/04/20", 20);
 }
 
 fn test_work_days_in_period(start: &str, end: &str, expected: i64) {

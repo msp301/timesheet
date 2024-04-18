@@ -2,7 +2,7 @@ use core::f64;
 use std::i64;
 
 use chrono::{Datelike, Months, NaiveDate, Weekday};
-use govuk_bank_holidays::{BankHolidayCalendar, MonToFriWorkDays};
+use govuk_bank_holidays::{BankHolidayCalendar, Division, MonToFriWorkDays};
 use lazy_static::lazy_static;
 
 #[derive(Debug, PartialEq)]
@@ -79,8 +79,10 @@ pub fn get_work_days_in_period(period: &Period) -> i64 {
             .checked_add_days(chrono::Days::new(i as u64))
             .unwrap();
 
-        if is_work_day(date.weekday()) && !CALENDAR.is_holiday(date.into(), None) {
+        let is_holiday = CALENDAR.is_holiday(date.into(), Some(Division::EnglandAndWales));
+        if is_work_day(date.weekday()) && !is_holiday {
             workdays += 1;
+            println!("{} is a workday", date);
         }
     }
 
