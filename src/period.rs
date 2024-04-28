@@ -82,7 +82,6 @@ pub fn get_work_days_in_period(period: &Period) -> i64 {
         let is_holiday = CALENDAR.is_holiday(date.into(), Some(Division::EnglandAndWales));
         if is_work_day(date.weekday()) && !is_holiday {
             workdays += 1;
-            println!("{} is a workday", date);
         }
     }
 
